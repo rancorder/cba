@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/deck", "destination": "/index.html" },
+    { "source": "/deck/:path*", "destination": "/index.html" }
+  ]
+}
