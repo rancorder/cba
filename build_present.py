@@ -1,5 +1,5 @@
 """Build present.html — 商談者用 左右分割ビュー。
-左=台本（クリックでスライド連動）、右=顧客提示スライド（全画面トグル付き）。
+左=台本（クリックでスライド連動）、右=確認用スライド。別窓の顧客提示画面と同期。
 slide rendering JS is reused verbatim from build_html.py so both views stay identical."""
 import json, re
 
@@ -65,6 +65,7 @@ __SLIDE_CSS__
                border-radius:16px;padding:6px 15px;font-size:12px;letter-spacing:.06em;cursor:pointer;
                font-family:"Noto Serif JP",serif}
   #rbar button:hover{background:rgba(232,221,213,.2)}
+  #rbar button.share{background:rgba(232,155,126,.18);border-color:rgba(232,155,126,.55);color:#f8d7ca}
   #rbar button.fs{background:var(--accent);color:#1a1411;border-color:var(--accent);font-weight:500}
   #rstage{flex:1;display:flex;align-items:center;justify-content:center;padding:22px;min-height:0}
   #rframe{position:relative;width:100%;aspect-ratio:16/9;max-height:100%;max-width:calc((100vh - 94px)*1.7778);
@@ -82,6 +83,13 @@ __SLIDE_CSS__
           font-size:12px;letter-spacing:.08em;cursor:pointer;font-family:"Noto Serif JP",serif}
   body.fs #fsexit{display:block}
   body.fs #fsexit:hover{background:rgba(36,28,26,.8)}
+
+  /* customer display: /customer is a clean, shareable screen. It listens to /present. */
+  body.customer #script,body.customer #rbar,body.customer #fsexit{display:none}
+  body.customer #app,body.customer #right{width:100vw;height:100vh}
+  body.customer #rstage{padding:0;width:100vw;height:100vh}
+  body.customer #rframe{aspect-ratio:auto;width:100vw;height:100vh;max-width:none;max-height:none;box-shadow:none}
+  body.customer{background:#241c1a}
 
   @media(max-width:900px){
     #app{flex-direction:column}
@@ -105,7 +113,8 @@ __SLIDE_CSS__
       <div class="btns">
         <button onclick="go(-1)">‹ 前</button>
         <button onclick="go(1)">次 ›</button>
-        <button class="fs" onclick="enterFs()">⛶ 顧客に全画面表示</button>
+        <button class="share" onclick="openCustomer()">↗ 顧客提示画面を別窓で開く</button>
+        <button class="fs" onclick="enterFs()">⛶ この画面を全画面</button>
       </div>
     </div>
     <div id="rstage"><div id="rframe"></div></div>
@@ -117,6 +126,55 @@ __SLIDE_CSS__
 const DATA = __DATA__;
 const S = DATA.slides, IMG = DATA.images;
 let cur = 0;
+
+const VIEW_MODE = (()=>{
+  const path = location.pathname.replace(/\/$/,'');
+  const q = new URLSearchParams(location.search);
+  return (path.endsWith('/customer') || q.get('view') === 'customer') ? 'customer' : 'presenter';
+})();
+const IS_CUSTOMER = VIEW_MODE === 'customer';
+if(IS_CUSTOMER) document.body.classList.add('customer');
+
+const SYNC_CHANNEL = 'cba-present-sync-v1';
+const SYNC_KEY = 'cba-present-current-slide';
+let bc = null;
+try{
+  bc = new BroadcastChannel(SYNC_CHANNEL);
+  bc.onmessage = e => {
+    const msg = e.data || {};
+    if(IS_CUSTOMER && msg.type === 'slide') show(Number(msg.index)||0,{broadcast:false,scroll:false});
+  };
+}catch(e){}
+
+function publishSlide(i){
+  const msg = {type:'slide', index:i, ts:Date.now()};
+  try{ if(bc) bc.postMessage(msg); }catch(e){}
+  try{ localStorage.setItem(SYNC_KEY, JSON.stringify(msg)); }catch(e){}
+}
+function readInitialSlide(){
+  const q = new URLSearchParams(location.search);
+  if(q.has('slide')) return Math.max(0, Math.min(S.length-1, Number(q.get('slide'))||0));
+  try{
+    const msg = JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');
+    if(Number.isFinite(msg.index)) return Math.max(0, Math.min(S.length-1, msg.index));
+  }catch(e){}
+  return 0;
+}
+window.addEventListener('storage',e=>{
+  if(!IS_CUSTOMER || e.key !== SYNC_KEY || !e.newValue) return;
+  try{
+    const msg = JSON.parse(e.newValue);
+    if(msg.type === 'slide') show(Number(msg.index)||0,{broadcast:false,scroll:false});
+  }catch(err){}
+});
+function openCustomer(){
+  const url = new URL('/customer', location.origin);
+  url.searchParams.set('slide', String(cur));
+  const w = window.open(url.toString(), 'cba_customer_display', 'popup=yes,width=1280,height=720');
+  if(w) w.focus();
+  setTimeout(()=>publishSlide(cur), 300);
+  setTimeout(()=>publishSlide(cur), 1000);
+}
 
 __RENDER_JS__
 
@@ -145,15 +203,19 @@ sclist.innerHTML=S.map((s,i)=>{
 const scItems=[...sclist.querySelectorAll('.sc-item')];
 
 /* ---- sync ---- */
-function show(i){
+function show(i,opt={}){
   cur=Math.max(0,Math.min(S.length-1,i));
   slideEls.forEach((el,k)=>el.classList.toggle('active',k===cur));
   scItems.forEach((el,k)=>el.classList.toggle('active',k===cur));
-  document.getElementById('pos').textContent=String(cur+1).padStart(2,'0')+' / '+String(S.length).padStart(2,'0');
+  const pos=document.getElementById('pos');
+  if(pos) pos.textContent=String(cur+1).padStart(2,'0')+' / '+String(S.length).padStart(2,'0');
   // keep active script item in view
-  const a=scItems[cur];
-  if(a){const r=a.getBoundingClientRect(),sc=document.getElementById('script');
-    if(r.top<90||r.bottom>innerHeight)a.scrollIntoView({block:'center',behavior:'smooth'});}
+  if(!IS_CUSTOMER && opt.scroll !== false){
+    const a=scItems[cur];
+    if(a){const r=a.getBoundingClientRect(),sc=document.getElementById('script');
+      if(r.top<90||r.bottom>innerHeight)a.scrollIntoView({block:'center',behavior:'smooth'});}
+  }
+  if(!IS_CUSTOMER && opt.broadcast !== false) publishSlide(cur);
 }
 function go(d){show(cur+d)}
 
@@ -175,12 +237,13 @@ addEventListener('keydown',e=>{
   if(e.key==='Escape'&&document.body.classList.contains('fs'))exitFs();
   if(e.key==='Home')show(0); if(e.key==='End')show(S.length-1);
 });
-rframe.addEventListener('click',()=>{if(document.body.classList.contains('fs'))go(1)});
+rframe.addEventListener('click',()=>{if(!IS_CUSTOMER && document.body.classList.contains('fs'))go(1)});
 let tx=0;
 rframe.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
 rframe.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?1:-1)},{passive:true});
 
-show(0);
+show(readInitialSlide(),{broadcast:false,scroll:false});
+if(!IS_CUSTOMER) setTimeout(()=>publishSlide(cur), 500);
 </script>
 </body>
 </html>'''
