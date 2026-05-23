@@ -1,4 +1,8 @@
 {
+  "version": 2,
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
     { "source": "/deck", "destination": "/index.html" },
