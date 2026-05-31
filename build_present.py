@@ -1,5 +1,5 @@
 """Build present.html — 商談者用 左右分割ビュー。
-左=台本（クリックでスライド連動）、右=確認用スライド。別窓の顧客提示画面と同期。
+左=台本（クリックでスライド連動）、右=顧客提示スライド（全画面トグル付き）。
 slide rendering JS is reused verbatim from build_html.py so both views stay identical."""
 import json, re
 
@@ -65,31 +65,16 @@ __SLIDE_CSS__
                border-radius:16px;padding:6px 15px;font-size:12px;letter-spacing:.06em;cursor:pointer;
                font-family:"Noto Serif JP",serif}
   #rbar button:hover{background:rgba(232,221,213,.2)}
-  #rbar button.share{background:rgba(232,155,126,.18);border-color:rgba(232,155,126,.55);color:#f8d7ca}
   #rbar button.fs{background:var(--accent);color:#1a1411;border-color:var(--accent);font-weight:500}
-  #rstage{flex:1;display:flex;align-items:center;justify-content:center;padding:22px;min-height:0}
-  #rframe{position:relative;width:100%;aspect-ratio:16/9;max-height:100%;max-width:calc((100vh - 94px)*1.7778);
+  #custStatus{font-size:11px;letter-spacing:.06em;padding:5px 11px;border-radius:13px;align-self:center}
+  #custStatus.cust-off{color:#9a8b80;border:1px solid rgba(232,221,213,.2)}
+  #custStatus.cust-on{color:#1a1411;background:#9bbf8f;font-weight:500}
+  #rstage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;min-height:0;position:relative}
+  #rframe{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100% - 40px);max-width:calc((100vh - 134px)*1.7778);
           background:var(--bg);overflow:hidden;container-type:size;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+  #rhint{margin-top:14px;max-width:80%;text-align:center;font-size:11px;line-height:1.6;color:#8a7b70;letter-spacing:.03em}
   .slide{position:absolute;inset:0;opacity:0;transition:opacity .4s ease;pointer-events:none}
   .slide.active{opacity:1;pointer-events:auto}
-
-  /* fullscreen mode: right frame fills screen, hide everything else */
-  body.fs #script,body.fs #rbar{display:none}
-  body.fs #right{height:100vh}
-  body.fs #rstage{padding:0}
-  body.fs #rframe{aspect-ratio:auto;width:100vw;height:100vh;max-width:none;max-height:none;box-shadow:none}
-  #fsexit{display:none;position:fixed;top:14px;right:16px;z-index:100;background:rgba(36,28,26,.55);
-          color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:7px 16px;
-          font-size:12px;letter-spacing:.08em;cursor:pointer;font-family:"Noto Serif JP",serif}
-  body.fs #fsexit{display:block}
-  body.fs #fsexit:hover{background:rgba(36,28,26,.8)}
-
-  /* customer display: /customer is a clean, shareable screen. It listens to /present. */
-  body.customer #script,body.customer #rbar,body.customer #fsexit{display:none}
-  body.customer #app,body.customer #right{width:100vw;height:100vh}
-  body.customer #rstage{padding:0;width:100vw;height:100vh}
-  body.customer #rframe{aspect-ratio:auto;width:100vw;height:100vh;max-width:none;max-height:none;box-shadow:none}
-  body.customer{background:#241c1a}
 
   @media(max-width:900px){
     #app{flex-direction:column}
@@ -113,68 +98,42 @@ __SLIDE_CSS__
       <div class="btns">
         <button onclick="go(-1)">‹ 前</button>
         <button onclick="go(1)">次 ›</button>
-        <button class="share" onclick="openCustomer()">↗ 顧客提示画面を別窓で開く</button>
-        <button class="fs" onclick="enterFs()">⛶ この画面を全画面</button>
+        <span id="custStatus" class="cust-off">顧客画面：未接続</span>
+        <button class="fs" onclick="openCustomer()">🖥 顧客画面を別タブで開く</button>
       </div>
     </div>
-    <div id="rstage"><div id="rframe"></div></div>
+    <div id="rstage"><div id="rframe"></div>
+      <div id="rhint">右はプレビューです。「顧客画面を別タブで開く」を押すと、別タブに顧客用スライドが開き、この台本クリックと連動します。そのタブをZoomで共有してください。</div>
+    </div>
   </div>
 </div>
-<button id="fsexit" onclick="exitFs()">✕ 全画面を終了（商談者ビューに戻る）</button>
 
 <script>
 const DATA = __DATA__;
 const S = DATA.slides, IMG = DATA.images;
 let cur = 0;
 
-const VIEW_MODE = (()=>{
-  const path = location.pathname.replace(/\/$/,'');
-  const q = new URLSearchParams(location.search);
-  return (path.endsWith('/customer') || q.get('view') === 'customer') ? 'customer' : 'presenter';
-})();
-const IS_CUSTOMER = VIEW_MODE === 'customer';
-if(IS_CUSTOMER) document.body.classList.add('customer');
-
-const SYNC_CHANNEL = 'cba-present-sync-v1';
-const SYNC_KEY = 'cba-present-current-slide';
-let bc = null;
-try{
-  bc = new BroadcastChannel(SYNC_CHANNEL);
-  bc.onmessage = e => {
-    const msg = e.data || {};
-    if(IS_CUSTOMER && msg.type === 'slide') show(Number(msg.index)||0,{broadcast:false,scroll:false});
-  };
-}catch(e){}
-
-function publishSlide(i){
-  const msg = {type:'slide', index:i, ts:Date.now()};
-  try{ if(bc) bc.postMessage(msg); }catch(e){}
-  try{ localStorage.setItem(SYNC_KEY, JSON.stringify(msg)); }catch(e){}
-}
-function readInitialSlide(){
-  const q = new URLSearchParams(location.search);
-  if(q.has('slide')) return Math.max(0, Math.min(S.length-1, Number(q.get('slide'))||0));
-  try{
-    const msg = JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');
-    if(Number.isFinite(msg.index)) return Math.max(0, Math.min(S.length-1, msg.index));
-  }catch(e){}
-  return 0;
-}
-window.addEventListener('storage',e=>{
-  if(!IS_CUSTOMER || e.key !== SYNC_KEY || !e.newValue) return;
-  try{
-    const msg = JSON.parse(e.newValue);
-    if(msg.type === 'slide') show(Number(msg.index)||0,{broadcast:false,scroll:false});
-  }catch(err){}
-});
+/* ---- customer tab sync via BroadcastChannel ---- */
+const chan = ('BroadcastChannel' in window) ? new BroadcastChannel('cba-deck-sync') : null;
+let custWin = null;
 function openCustomer(){
-  const url = new URL('/customer', location.origin);
-  url.searchParams.set('slide', String(cur));
-  const w = window.open(url.toString(), 'cba_customer_display', 'popup=yes,width=1280,height=720');
-  if(w) w.focus();
-  setTimeout(()=>publishSlide(cur), 300);
-  setTimeout(()=>publishSlide(cur), 1000);
+  // index.html is the slide-only view; ?customer=1 makes it a synced receiver
+  custWin = window.open('index.html?customer=1','cba_customer');
+  setCustStatus(true);
+  // push current slide once the tab is ready
+  setTimeout(()=>broadcast(cur), 800);
 }
+function broadcast(i){ if(chan) chan.postMessage({type:'goto', slide:i}); }
+function setCustStatus(on){
+  const el=document.getElementById('custStatus');
+  el.textContent = on ? '顧客画面：接続中' : '顧客画面：未接続';
+  el.className = on ? 'cust-on' : 'cust-off';
+}
+// customer tab announces itself / closes
+if(chan) chan.onmessage = (e)=>{
+  if(e.data?.type==='hello') { setCustStatus(true); broadcast(cur); }
+  if(e.data?.type==='bye') setCustStatus(false);
+};
 
 __RENDER_JS__
 
@@ -203,47 +162,30 @@ sclist.innerHTML=S.map((s,i)=>{
 const scItems=[...sclist.querySelectorAll('.sc-item')];
 
 /* ---- sync ---- */
-function show(i,opt={}){
+function show(i){
   cur=Math.max(0,Math.min(S.length-1,i));
   slideEls.forEach((el,k)=>el.classList.toggle('active',k===cur));
   scItems.forEach((el,k)=>el.classList.toggle('active',k===cur));
-  const pos=document.getElementById('pos');
-  if(pos) pos.textContent=String(cur+1).padStart(2,'0')+' / '+String(S.length).padStart(2,'0');
+  document.getElementById('pos').textContent=String(cur+1).padStart(2,'0')+' / '+String(S.length).padStart(2,'0');
+  broadcast(cur); // keep customer tab in sync
   // keep active script item in view
-  if(!IS_CUSTOMER && opt.scroll !== false){
-    const a=scItems[cur];
-    if(a){const r=a.getBoundingClientRect(),sc=document.getElementById('script');
-      if(r.top<90||r.bottom>innerHeight)a.scrollIntoView({block:'center',behavior:'smooth'});}
-  }
-  if(!IS_CUSTOMER && opt.broadcast !== false) publishSlide(cur);
+  const a=scItems[cur];
+  if(a){const r=a.getBoundingClientRect(),sc=document.getElementById('script');
+    if(r.top<90||r.bottom>innerHeight)a.scrollIntoView({block:'center',behavior:'smooth'});}
 }
 function go(d){show(cur+d)}
 
-/* ---- fullscreen (customer-facing) ---- */
-function enterFs(){
-  document.body.classList.add('fs');
-  if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
-}
-function exitFs(){
-  document.body.classList.remove('fs');
-  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
-}
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)document.body.classList.remove('fs')});
-
-/* ---- keys: arrows always work; in fullscreen click advances ---- */
+/* ---- keys ---- */
 addEventListener('keydown',e=>{
   if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){go(1);e.preventDefault()}
   if(e.key==='ArrowLeft'||e.key==='PageUp'){go(-1)}
-  if(e.key==='Escape'&&document.body.classList.contains('fs'))exitFs();
   if(e.key==='Home')show(0); if(e.key==='End')show(S.length-1);
 });
-rframe.addEventListener('click',()=>{if(!IS_CUSTOMER && document.body.classList.contains('fs'))go(1)});
 let tx=0;
 rframe.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
 rframe.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?1:-1)},{passive:true});
 
-show(readInitialSlide(),{broadcast:false,scroll:false});
-if(!IS_CUSTOMER) setTimeout(()=>publishSlide(cur), 500);
+show(0);
 </script>
 </body>
 </html>'''

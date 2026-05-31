@@ -1,25 +1,4 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
   "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/deck",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/deck/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/present",
-      "destination": "/present.html"
-    },
-    {
-      "source": "/presenter",
-      "destination": "/present.html"
-    }
-  ]
+  "trailingSlash": false
 }

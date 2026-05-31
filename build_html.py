@@ -58,6 +58,76 @@ HTML = r'''<!DOCTYPE html>
   .cv-sub .en{font-style:italic;margin-left:1.4cqw;letter-spacing:.06em}
   .cv-sep{color:var(--gold);margin:0 .2cqw}
 
+  /* ===== plancompare: main 110 vs sub 77 ===== */
+  .pc-wrap{position:absolute;top:18cqh;bottom:13cqh;left:8cqw;right:8cqw;display:flex;gap:3cqw;align-items:stretch}
+  .pc-main,.pc-sub{flex:1;padding:3.5cqh 2.6cqw;display:flex;flex-direction:column;position:relative}
+  .pc-main{background:rgba(248,215,202,.32);border:1.5px solid var(--accent);border-radius:1cqw}
+  .pc-sub{background:rgba(251,246,241,.6);border:1px solid var(--hair);border-radius:1cqw}
+  .pc-tag{position:absolute;top:-1.6cqh;left:2.6cqw;background:var(--accent);color:#fff;font-size:1cqw;
+          letter-spacing:.14em;padding:.5cqh 1.4cqw;border-radius:1cqh}
+  .pc-name{font-size:1.5cqw;letter-spacing:.16em;color:var(--sub);margin-bottom:1.2cqh}
+  .pc-price{font-size:3.4cqw;letter-spacing:.03em;color:var(--accent);margin-bottom:.4cqh}
+  .pc-price-sub{color:var(--ink);opacity:.75;font-size:2.8cqw}
+  .pc-tax{font-size:1.1cqw;letter-spacing:.06em;margin-left:.4cqw;color:var(--sub)}
+  .pc-for{font-size:1.2cqw;letter-spacing:.06em;color:var(--ink);margin-bottom:2cqh;line-height:1.5;min-height:3.4cqh}
+  .pc-points{border-top:1px solid var(--hair);padding-top:1.8cqh}
+  .pc-pt{font-size:1.15cqw;letter-spacing:.05em;line-height:1.6;margin-bottom:1.2cqh;display:flex;gap:.7cqw;color:var(--sub)}
+  .pc-dot{color:var(--gold)}
+  .pc-foot{position:absolute;bottom:7.5cqh;left:0;right:0;text-align:center;font-size:1.25cqw;letter-spacing:.1em;color:var(--ink)}
+
+  /* ===== photo-driven types ===== */
+  /* photo: full-bleed hero */
+  .ph-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .ph-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(40,28,24,.05) 0%,rgba(40,28,24,.15) 45%,rgba(40,28,24,.62) 100%)}
+  .ph-scrim-deep{background:linear-gradient(180deg,rgba(30,22,20,.45),rgba(30,22,20,.55))}
+  .ph-cap{position:absolute;left:7cqw;right:7cqw;bottom:8cqh;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.4)}
+  .ph-eyebrow{font-family:"Cormorant Garamond",serif;letter-spacing:.4em;font-size:1.2cqw;color:#f3e4d8;margin-bottom:1.5cqh;text-transform:uppercase}
+  .ph-title{font-size:3cqw;letter-spacing:.14em;line-height:1.5;font-weight:400}
+  .ph-title em{font-style:normal;background:linear-gradient(transparent 62%,rgba(232,155,126,.85) 62%);padding:0 .1em}
+  .ph-sub{margin-top:2cqh;font-size:1.35cqw;letter-spacing:.12em;color:#f0e0d4;line-height:1.7}
+
+  /* photogrid */
+  .pg-grid{position:absolute;top:18cqh;bottom:6cqh;left:5cqw;right:5cqw;display:grid;gap:1.6cqw}
+  .pg-2{grid-template-columns:1fr 1fr}
+  .pg-3{grid-template-columns:1fr 1fr 1fr}
+  .pg-4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+  .pg-6{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr}
+  .pg-cell{position:relative;overflow:hidden;border-radius:.6cqw}
+  .pg-cell img{width:100%;height:100%;object-fit:cover;display:block}
+  .pg-lbl{position:absolute;left:0;right:0;bottom:0;padding:1.6cqh 1cqw .9cqh;color:#fff;font-size:1.05cqw;
+          letter-spacing:.08em;text-align:center;background:linear-gradient(transparent,rgba(40,28,24,.75))}
+
+  /* split: half photo half text */
+  .sp-img{position:absolute;top:0;bottom:0;width:46cqw;object-fit:cover}
+  .sp-img.sp-l{left:0} .sp-img.sp-r{right:0}
+  .sp-text{position:absolute;top:0;bottom:0;width:54cqw;padding:0 6cqw;display:flex;flex-direction:column;justify-content:center}
+  .sp-text.sp-tl{left:0} .sp-text.sp-tr{right:0}
+  .sp-title{font-size:2.5cqw;letter-spacing:.14em;line-height:1.5;margin-bottom:3cqh}
+  .sp-title em{font-style:normal;background:linear-gradient(transparent 62%,var(--band) 62%);padding:0 .1em}
+  .sp-body{font-size:1.3cqw;letter-spacing:.06em;line-height:2;color:var(--sub)}
+  .sp-list{margin-top:1cqh}
+  .sp-li{font-size:1.35cqw;letter-spacing:.08em;line-height:1.7;margin-bottom:1.8cqh;color:var(--ink);display:flex;gap:.8cqw}
+  .sp-dot{color:var(--gold)}
+
+  /* photoquote: portrait + testimonial */
+  .pq-portrait{position:absolute;left:0;top:0;bottom:0;width:40cqw;object-fit:cover}
+  .pq-body{position:absolute;right:0;top:0;bottom:0;width:60cqw;padding:0 6cqw;display:flex;flex-direction:column;justify-content:center}
+  .pq-meta{font-size:1.3cqw;letter-spacing:.16em;color:var(--sub);margin-bottom:2cqh}
+  .pq-headline{font-size:2.2cqw;letter-spacing:.1em;color:var(--accent);line-height:1.5;padding-bottom:2.5cqh;
+               margin-bottom:2.5cqh;border-bottom:1px solid var(--hair)}
+  .pq-quote{font-size:1.2cqw;letter-spacing:.06em;line-height:1.95;color:var(--ink)}
+  .pq-quote p{margin-bottom:1.3cqh}
+  .pq-quote p:first-child:before{content:"「";color:var(--gold)}
+  .pq-quote p:last-child:after{content:"」";color:var(--gold)}
+
+  /* photostat: hero + big numbers */
+  .ps-wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+  .ps-wrap .ph-eyebrow{color:#f3e4d8;margin-bottom:5cqh}
+  .ps-stats{display:flex;gap:6cqw}
+  .ps-stat{text-align:center}
+  .ps-num{font-family:"Cormorant Garamond",serif;font-size:5cqw;color:#fff;line-height:1;text-shadow:0 2px 16px rgba(0,0,0,.4)}
+  .ps-lbl{margin-top:1.5cqh;font-size:1.2cqw;letter-spacing:.14em;color:#f0e0d4}
+
   /* statement */
   .st{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center}
   .st .eyebrow{font-size:1.25cqw;margin-bottom:4.5cqh}
@@ -66,8 +136,22 @@ HTML = r'''<!DOCTYPE html>
   .st .foot-mark{position:absolute;bottom:4cqh;right:5cqw;font-size:.85cqw;letter-spacing:.25em;color:var(--gold);font-style:italic}
 
   /* agenda / reflect / cards / closing share heading */
-  .head-band{height:13cqh;padding-left:6cqw;background:var(--band)}
+  .head-band{height:13cqh;padding-left:6cqw;background:var(--band);display:flex}
   .head-band h2{font-weight:400;font-size:2.5cqw;letter-spacing:.2em;align-self:center}
+
+  /* flexpage: vertically-centered content block (fixes overlap + balance) */
+  .flexpage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+            justify-content:center;padding:9cqh 9cqw;text-align:center}
+  .fp-eyebrow{font-size:1.15cqw;letter-spacing:.4em;margin-bottom:1.8cqh}
+  .fp-hair{width:5cqw;margin-bottom:3.2cqh}
+  .fp-title{font-weight:400;font-size:2.8cqw;letter-spacing:.16em;line-height:1.55;margin-bottom:5cqh}
+  .fp-list{width:100%;max-width:72cqw;text-align:left}
+  .fp-list .row{display:flex;align-items:flex-start;margin-bottom:3cqh}
+  .fp-list .row:last-child{margin-bottom:0}
+  .fp-list .n{flex:0 0 5cqw;font-style:italic;font-size:2cqw;color:var(--accent);padding-top:.3cqh}
+  .fp-list .t{flex:1;font-size:1.55cqw;letter-spacing:.1em;line-height:1.85}
+  .fp-foot{margin-top:5cqh;font-size:1.35cqw;letter-spacing:.16em;color:var(--sub)}
+  .close-c-flow{margin-top:5cqh;font-size:1.45cqw;letter-spacing:.16em;color:var(--sub);line-height:1.9}
   .center-eyebrow{font-size:1.15cqw;margin-bottom:2.2cqh}
   .center-title{text-align:center;font-weight:400;font-size:2.8cqw;letter-spacing:.16em;line-height:1.55}
 
@@ -125,11 +209,24 @@ HTML = r'''<!DOCTYPE html>
   .sp .od{font-size:1.1cqw;color:var(--sub);letter-spacing:.06em;line-height:1.5}
 
   /* contract */
-  .ct{position:absolute;top:26cqh;left:10cqw;right:10cqw}
-  .ct .row{display:flex;align-items:flex-start;margin-bottom:2.4cqh}
-  .ct .k{flex:0 0 22cqw;font-size:1.45cqw;letter-spacing:.1em}
-  .ct .v{flex:1;font-size:1.2cqw;letter-spacing:.05em;color:var(--sub);line-height:1.65}
-  .ct .row.warn .k,.ct .row.warn .v{color:var(--accent)}
+  /* contract — vertically centered, coral numbers, soft dividers */
+  .ct{position:absolute;top:17cqh;bottom:7cqh;left:11cqw;right:11cqw;display:flex;flex-direction:column;justify-content:center}
+  .ct .crow{display:flex;align-items:flex-start;padding:2.3cqh 0;border-bottom:1px solid var(--hair)}
+  .ct .crow:last-child{border-bottom:none}
+  .ct .ck{flex:0 0 24cqw;font-size:1.45cqw;letter-spacing:.1em;display:flex;align-items:baseline;gap:.7cqw}
+  .ct .cnum{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:1.5cqw;color:var(--accent)}
+  .ct .cv{flex:1;font-size:1.2cqw;letter-spacing:.05em;color:var(--sub);line-height:1.7}
+  .ct .crow.warn .ck,.ct .crow.warn .cv{color:var(--accent)}
+  .ct .crow.warn .cnum{color:var(--accent)}
+
+  /* concern — reassuring card grid (warm, not a data table) */
+  .concern-grid{display:flex;gap:2.8cqw;width:100%;max-width:80cqw;justify-content:center}
+  .concern-card{flex:1;background:rgba(248,215,202,.22);border-radius:1cqw;padding:3.5cqh 2.2cqw;
+                display:flex;flex-direction:column}
+  .concern-card .cc-q{font-size:1.5cqw;letter-spacing:.08em;color:var(--ink);margin-bottom:2cqh;
+                      line-height:1.5;display:flex;align-items:baseline;gap:.5cqw}
+  .concern-card .cc-mark{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:1.9cqw;color:var(--accent)}
+  .concern-card .cc-a{font-size:1.15cqw;letter-spacing:.04em;color:var(--sub);line-height:1.8}
 
   /* revenue */
   .rev{position:absolute;top:24cqh;left:10cqw;right:10cqw}
@@ -183,6 +280,14 @@ HTML = r'''<!DOCTYPE html>
                   padding:5px 12px;border-radius:14px}
   #notes .nt-wrap{padding-top:70px}
 
+  /* customer-mode: synced receiver tab — clean, chrome hidden, fills screen */
+  body.customer-mode #ui,
+  body.customer-mode #counter,
+  body.customer-mode #dots,
+  body.customer-mode #prog{display:none!important}
+  body.customer-mode #stage{background:#241c1a}
+  body.customer-mode .slide-frame{box-shadow:none}
+
   @media (max-width:768px){
     .slide-frame{height:auto;aspect-ratio:16/9}
   }
@@ -220,6 +325,63 @@ function roman(i){return ['i','ii','iii','iv','v','vi','vii','viii'][i]||(i+1)}
 function render(s){
   const d = s.deck;
   switch(s.type){
+    case 'plancompare': return `
+      <div class="band head-band"><h2>${d.title}</h2></div>
+      <div class="pc-wrap">
+        <div class="pc-main">
+          <div class="pc-tag">${d.main.tag}</div>
+          <div class="pc-name">${d.main.name}</div>
+          <div class="pc-price">${d.main.price}<span class="pc-tax">${d.main.tax}</span></div>
+          <div class="pc-for">${d.main.for}</div>
+          <div class="pc-points">${d.main.points.map(t=>`<div class="pc-pt"><span class="pc-dot">◇</span>${t}</div>`).join('')}</div>
+        </div>
+        <div class="pc-sub">
+          <div class="pc-name">${d.sub.name}</div>
+          <div class="pc-price pc-price-sub">${d.sub.price}<span class="pc-tax">${d.sub.tax}</span></div>
+          <div class="pc-for">${d.sub.for}</div>
+          <div class="pc-points">${d.sub.points.map(t=>`<div class="pc-pt"><span class="pc-dot">◇</span>${t}</div>`).join('')}</div>
+        </div>
+      </div>
+      <div class="pc-foot">${d.foot}</div>
+      <div class="foot" style="bottom:3cqh">${d.note}</div>`;
+    case 'photo': return `
+      <img class="ph-bg" src="${IMG[d.img]}">
+      <div class="ph-scrim"></div>
+      <div class="ph-cap">
+        ${d.eyebrow?`<div class="ph-eyebrow">${d.eyebrow}</div>`:''}
+        <div class="ph-title">${d.title}</div>
+        ${d.sub?`<div class="ph-sub">${d.sub}</div>`:''}
+      </div>`;
+    case 'photogrid': return `
+      <div class="band head-band"><h2>${d.title}</h2></div>
+      <div class="pg-grid pg-${d.imgs.length}">
+        ${d.imgs.map((g,i)=>`<div class="pg-cell"><img src="${IMG[g.img]}"><div class="pg-lbl">${g.cap}</div></div>`).join('')}
+      </div>
+      ${d.foot?`<div class="foot" style="bottom:3cqh">${d.foot}</div>`:''}`;
+    case 'split': return `
+      <img class="sp-img ${d.side==='left'?'sp-l':'sp-r'}" src="${IMG[d.img]}">
+      <div class="sp-text ${d.side==='left'?'sp-tr':'sp-tl'}">
+        ${d.eyebrow?`<div class="eyebrow" style="text-align:left;font-size:1.1cqw">${d.eyebrow}</div><div class="hair" style="margin:1.2cqh 0 2.4cqh;width:4cqw"></div>`:''}
+        <div class="sp-title">${d.title}</div>
+        ${d.body?`<div class="sp-body">${d.body}</div>`:''}
+        ${d.list?`<div class="sp-list">${d.list.map(t=>`<div class="sp-li"><span class="sp-dot">◇</span>${t}</div>`).join('')}</div>`:''}
+      </div>`;
+    case 'photoquote': return `
+      <img class="pq-portrait" src="${IMG[d.img]}">
+      <div class="pq-body">
+        <div class="pq-meta">${d.meta}</div>
+        <div class="pq-headline">${d.headline}</div>
+        <div class="pq-quote">${d.quote.map(p=>`<p>${p}</p>`).join('')}</div>
+      </div>`;
+    case 'photostat': return `
+      <img class="ph-bg" src="${IMG[d.img]}">
+      <div class="ph-scrim ph-scrim-deep"></div>
+      <div class="ps-wrap">
+        <div class="ph-eyebrow" style="text-align:center">${d.eyebrow||''}</div>
+        <div class="ps-stats">
+          ${d.stats.map(s=>`<div class="ps-stat"><div class="ps-num">${s[0]}</div><div class="ps-lbl">${s[1]}</div></div>`).join('')}
+        </div>
+      </div>`;
     case 'cover': return `
       <img class="cv-logo" src="${IMG[d.logo]}">
       <img class="cv-hero" src="${IMG[d.hero]}">
@@ -236,31 +398,31 @@ function render(s){
         <div class="foot-mark">Crystal Singing Bowl Beauty Academy</div>
       </div>`;
     case 'agenda': return `
-      <div style="position:absolute;top:11cqh;left:0;right:0;text-align:center">
-        <div class="center-title">${d.title}</div>
-      </div>
-      <div class="lst">
-        ${d.items.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
-      </div>
-      <div class="foot">${d.foot}</div>`;
+      <div class="flexpage">
+        <div class="fp-title">${d.title}</div>
+        <div class="fp-list">
+          ${d.items.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
+        </div>
+        <div class="fp-foot">${d.foot}</div>
+      </div>`;
     case 'curator': return `
-      <div style="position:absolute;top:9cqh;left:0;right:0;text-align:center">
-        <div class="eyebrow center-eyebrow">${d.eyebrow}</div><div class="hair" style="width:5cqw"></div>
-      </div>
-      <div style="position:absolute;top:16cqh;left:0;right:0"><div class="center-title">${d.title}</div></div>
-      <div class="blk">
-        ${d.reasons.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
-      </div>
-      <div class="sign">${d.sign}</div>`;
+      <div class="flexpage">
+        <div class="eyebrow fp-eyebrow">${d.eyebrow}</div><div class="hair fp-hair"></div>
+        <div class="fp-title">${d.title}</div>
+        <div class="fp-list">
+          ${d.reasons.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
+        </div>
+        <div class="sign">${d.sign}</div>
+      </div>`;
     case 'reflect': return `
-      <div style="position:absolute;top:9cqh;left:0;right:0;text-align:center">
-        <div class="eyebrow center-eyebrow">${d.eyebrow}</div><div class="hair" style="width:5cqw"></div>
-      </div>
-      <div style="position:absolute;top:16cqh;left:0;right:0"><div class="center-title">${d.title}</div></div>
-      <div class="blk">
-        ${d.lines.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
-      </div>
-      <div class="foot">${d.foot}</div>`;
+      <div class="flexpage">
+        <div class="eyebrow fp-eyebrow">${d.eyebrow}</div><div class="hair fp-hair"></div>
+        <div class="fp-title">${d.title}</div>
+        <div class="fp-list">
+          ${d.lines.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
+        </div>
+        <div class="fp-foot">${d.foot}</div>
+      </div>`;
     case 'testimonial': return `
       <div class="band head-band"><h2>${d.title}</h2></div>
       <div class="tm-meta">${d.meta}</div>
@@ -277,16 +439,15 @@ function render(s){
       <div class="cards">${d.cards.map(c=>`<div class="card">${c}</div>`).join('')}</div>
       <div class="foot">${d.foot}</div>`;
     case 'diagnostic': return `
-      <div style="position:absolute;top:8cqh;left:0;right:0;text-align:center">
-        <div class="eyebrow center-eyebrow">${d.eyebrow}</div><div class="hair" style="width:5cqw"></div>
-      </div>
-      <div style="position:absolute;top:15cqh;left:0;right:0">
-        <div class="center-title">${d.title}</div><div class="lead-c">${d.lead}</div>
-      </div>
-      <div class="blk" style="top:34cqh">
-        ${d.questions.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
-      </div>
-      <div class="close-c">${d.close}</div>`;
+      <div class="flexpage">
+        <div class="eyebrow fp-eyebrow">${d.eyebrow}</div><div class="hair fp-hair"></div>
+        <div class="fp-title">${d.title}</div>
+        <div class="lead-c">${d.lead}</div>
+        <div class="fp-list" style="margin-top:3cqh">
+          ${d.questions.map((t,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="t">${t}</div></div>`).join('')}
+        </div>
+        <div class="close-c-flow">${d.close}</div>
+      </div>`;
     case 'revenue': return `
       <div class="band head-band"><h2>${d.title}</h2></div>
       <div class="rev">
@@ -306,10 +467,24 @@ function render(s){
       <div class="sp">
         ${d.options.map(o=>`<div class="opt"><div class="ol">${o[0]}</div><div class="ot">${o[1]}</div><div class="od">${o[2]}</div></div>`).join('')}
       </div>`;
+    case 'concern': return `
+      <div class="flexpage">
+        ${d.eyebrow?`<div class="eyebrow fp-eyebrow">${d.eyebrow}</div><div class="hair fp-hair"></div>`:''}
+        <div class="fp-title" style="margin-bottom:6cqh">${d.title}</div>
+        <div class="concern-grid">
+          ${d.points.map((p,i)=>`<div class="concern-card">
+            <div class="cc-q"><span class="cc-mark">Q.</span>${p[0]}</div>
+            <div class="cc-a">${p[1]}</div>
+          </div>`).join('')}
+        </div>
+        ${d.foot?`<div class="fp-foot">${d.foot}</div>`:''}
+      </div>`;
     case 'contract': return `
       <div class="band head-band"><h2>${d.title}</h2></div>
       <div class="ct">
-        ${d.points.map(p=>{const w=p[0].includes('返金')?' warn':'';return `<div class="row${w}"><div class="k">${p[0]}</div><div class="v">${p[1]}</div></div>`}).join('')}
+        ${d.points.map((p,i)=>{const w=p[0].includes('返金')?' warn':'';return `<div class="crow${w}">
+          <div class="ck"><span class="cnum">${roman(i)}.</span>${p[0]}</div>
+          <div class="cv">${p[1]}</div></div>`}).join('')}
       </div>`;
     case 'closing': return `
       <div style="position:absolute;top:11cqh;left:0;right:0;text-align:center">
@@ -389,6 +564,19 @@ function toggleNotes(){
 buildNotes();
 const start = parseInt(location.hash.replace('#',''))||1;
 show(start-1);
+
+/* ---- customer mode: synced receiver tab (opened from present.html) ---- */
+(function(){
+  const isCustomer = new URLSearchParams(location.search).get('customer')==='1';
+  if(!isCustomer) return;
+  document.body.classList.add('customer-mode');
+  const chan = ('BroadcastChannel' in window) ? new BroadcastChannel('cba-deck-sync') : null;
+  if(chan){
+    chan.onmessage = (e)=>{ if(e.data?.type==='goto' && typeof e.data.slide==='number') show(e.data.slide); };
+    chan.postMessage({type:'hello'});            // tell presenter we're ready
+    addEventListener('beforeunload',()=>chan.postMessage({type:'bye'}));
+  }
+})();
 </script>
 </body>
 </html>'''
