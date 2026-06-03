@@ -58,6 +58,19 @@ HTML = r'''<!DOCTYPE html>
   .cv-sub .en{font-style:italic;margin-left:1.4cqw;letter-spacing:.06em}
   .cv-sep{color:var(--gold);margin:0 .2cqw}
 
+  /* ===== plantable: comparison table ===== */
+  .pt-tbl{position:absolute;top:17cqh;bottom:5cqh;left:6cqw;right:6cqw;display:flex;flex-direction:column}
+  .pt-row{display:flex;align-items:center;flex:1;border-radius:.5cqw}
+  .pt-row.pt-alt{background:rgba(184,153,104,.07)}
+  .pt-head{flex:0 0 auto;margin-bottom:.6cqh}
+  .pt-c0{flex:0 0 38cqw;padding:0 1.5cqw;font-size:1.15cqw;letter-spacing:.04em;color:var(--ink)}
+  .pt-c{flex:1;text-align:center;font-size:1.1cqw;letter-spacing:.03em;color:var(--sub)}
+  .pt-main-h{background:var(--accent);color:#fff;border-radius:.6cqw;padding:1.2cqh 0;font-size:1.35cqw;letter-spacing:.1em}
+  .pt-sub-h{background:rgba(248,215,202,.5);color:var(--ink);border-radius:.6cqw;padding:1.2cqh 0;font-size:1.35cqw;letter-spacing:.1em}
+  .pt-head .pt-c0{font-size:1cqw}
+  .pt-chk{display:inline-flex;align-items:center;justify-content:center;width:2.4cqw;height:2.4cqw;border-radius:50%;
+          background:var(--accent);color:#fff;font-size:1.2cqw}
+
   /* ===== plancompare: main 110 vs sub 77 ===== */
   .pc-wrap{position:absolute;top:18cqh;bottom:13cqh;left:8cqw;right:8cqw;display:flex;gap:3cqw;align-items:stretch}
   .pc-main,.pc-sub{flex:1;padding:3.5cqh 2.6cqw;display:flex;flex-direction:column;position:relative}
@@ -325,6 +338,20 @@ function roman(i){return ['i','ii','iii','iv','v','vi','vii','viii'][i]||(i+1)}
 function render(s){
   const d = s.deck;
   switch(s.type){
+    case 'plantable': return `
+      <div class="band head-band"><h2>${d.title}</h2></div>
+      <div class="pt-tbl">
+        <div class="pt-row pt-head">
+          <div class="pt-c0"></div>
+          <div class="pt-c pt-main-h">プレミアム</div>
+          <div class="pt-c pt-sub-h">ベーシック</div>
+        </div>
+        ${d.rows.map((r,i)=>`<div class="pt-row${i%2?' pt-alt':''}">
+          <div class="pt-c0">${r[0]}</div>
+          <div class="pt-c">${r[1]==='✓'?'<span class="pt-chk">✓</span>':r[1]}</div>
+          <div class="pt-c">${r[2]==='✓'?'<span class="pt-chk">✓</span>':r[2]}</div>
+        </div>`).join('')}
+      </div>`;
     case 'plancompare': return `
       <div class="band head-band"><h2>${d.title}</h2></div>
       <div class="pc-wrap">
@@ -510,16 +537,30 @@ S.forEach((s,i)=>{
 });
 const slideEls = [...frame.querySelectorAll('.slide')];
 
-/* dots / sections */
-function show(i){
-  cur = Math.max(0, Math.min(S.length-1, i));
-  slideEls.forEach((el,k)=>el.classList.toggle('active',k===cur));
-  document.getElementById('prog').style.width = ((cur+1)/S.length*100)+'%';
-  document.getElementById('counter').textContent = String(cur+1).padStart(2,'0')+' / '+String(S.length).padStart(2,'0');
-  document.getElementById('dots').textContent = S[cur].section || '';
-  location.hash = cur+1;
+/* ---------- target filtering (A=主婦・会社員 / B=音楽経験者 / C=ヨガ) ---------- */
+let TARGET = (new URLSearchParams(location.search).get('target')||'B').toUpperCase();
+if(!['A','B','C'].includes(TARGET)) TARGET='B';
+let view = [];           // array of slide indices visible for current target
+function rebuildView(){
+  view = S.map((s,i)=>i).filter(i=>{const t=S[i].target||'all'; return t==='all'||t===TARGET;});
 }
-function go(d){show(cur+d)}
+rebuildView();
+let vpos = 0;            // position within view
+
+/* dots / sections */
+function showView(p){
+  vpos = Math.max(0, Math.min(view.length-1, p));
+  cur = view[vpos];
+  slideEls.forEach((el,k)=>el.classList.toggle('active',k===cur));
+  document.getElementById('prog').style.width = ((vpos+1)/view.length*100)+'%';
+  document.getElementById('counter').textContent = String(vpos+1).padStart(2,'0')+' / '+String(view.length).padStart(2,'0');
+  document.getElementById('dots').textContent = S[cur].section || '';
+  location.hash = vpos+1;
+}
+// show(i) kept for compatibility: treat i as a view position
+function show(i){ showView(i); }
+function go(d){showView(vpos+d)}
+function setTarget(t){ if(['A','B','C'].includes(t)){ TARGET=t; rebuildView(); showView(0);} }
 
 /* keyboard / swipe */
 addEventListener('keydown',e=>{
@@ -563,7 +604,7 @@ function toggleNotes(){
 
 buildNotes();
 const start = parseInt(location.hash.replace('#',''))||1;
-show(start-1);
+showView(start-1);
 
 /* ---- customer mode: synced receiver tab (opened from present.html) ---- */
 (function(){
@@ -571,9 +612,19 @@ show(start-1);
   if(!isCustomer) return;
   document.body.classList.add('customer-mode');
   const chan = ('BroadcastChannel' in window) ? new BroadcastChannel('cba-deck-sync') : null;
+  // jump to an ABSOLUTE slide index (robust across target differences)
+  function gotoAbs(absIdx){
+    const t=S[absIdx]?.target||'all';
+    if(t!=='all' && t!==TARGET){ TARGET=t; rebuildView(); }
+    const p=view.indexOf(absIdx);
+    if(p>=0) showView(p);
+  }
   if(chan){
-    chan.onmessage = (e)=>{ if(e.data?.type==='goto' && typeof e.data.slide==='number') show(e.data.slide); };
-    chan.postMessage({type:'hello'});            // tell presenter we're ready
+    chan.onmessage = (e)=>{
+      if(e.data?.type==='goto' && typeof e.data.abs==='number') gotoAbs(e.data.abs);
+      if(e.data?.type==='target'){ TARGET=e.data.target; rebuildView(); showView(0); }
+    };
+    chan.postMessage({type:'hello'});
     addEventListener('beforeunload',()=>chan.postMessage({type:'bye'}));
   }
 })();

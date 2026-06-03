@@ -43,6 +43,11 @@ __SLIDE_CSS__
   .sc-top{position:sticky;top:0;z-index:5;background:#0f0b09;padding:16px 22px;border-bottom:1px solid rgba(232,221,213,.12)}
   .sc-top .ttl{font-family:"Cormorant Garamond",serif;letter-spacing:.18em;font-size:15px;color:#e8ddd5}
   .sc-top .sub{font-size:11px;color:#9a8b80;letter-spacing:.08em;margin-top:3px}
+  .tgt-switch{display:flex;gap:6px;margin-top:11px}
+  .tgt-switch .tgt{flex:1;background:rgba(232,221,213,.08);color:#c2b1a6;border:1px solid rgba(232,221,213,.18);
+                   border-radius:14px;padding:6px 4px;font-size:11px;letter-spacing:.02em;cursor:pointer;font-family:"Noto Serif JP",serif}
+  .tgt-switch .tgt:hover{background:rgba(232,221,213,.16)}
+  .tgt-switch .tgt.on{background:var(--accent);color:#1a1411;border-color:var(--accent);font-weight:500}
   .sc-item{padding:18px 22px;border-bottom:1px solid rgba(232,221,213,.08);cursor:pointer;transition:background .15s}
   .sc-item:hover{background:rgba(232,221,213,.04)}
   .sc-item.active{background:rgba(232,155,126,.12);border-left:3px solid var(--accent);padding-left:19px}
@@ -89,6 +94,11 @@ __SLIDE_CSS__
     <div class="sc-top">
       <div class="ttl">PRESENTER SCRIPT</div>
       <div class="sub">台本をクリック → 右のスライドが連動します</div>
+      <div class="tgt-switch">
+        <button class="tgt" data-t="A" onclick="setTarget('A')">① 主婦・会社員</button>
+        <button class="tgt" data-t="B" onclick="setTarget('B')">② 音楽経験者</button>
+        <button class="tgt" data-t="C" onclick="setTarget('C')">③ ヨガ</button>
+      </div>
     </div>
     <div id="sclist"></div>
   </div>
@@ -111,33 +121,38 @@ __SLIDE_CSS__
 <script>
 const DATA = __DATA__;
 const S = DATA.slides, IMG = DATA.images;
-let cur = 0;
 
 /* ---- customer tab sync via BroadcastChannel ---- */
 const chan = ('BroadcastChannel' in window) ? new BroadcastChannel('cba-deck-sync') : null;
 let custWin = null;
 function openCustomer(){
-  // index.html is the slide-only view; ?customer=1 makes it a synced receiver
-  custWin = window.open('index.html?customer=1','cba_customer');
+  custWin = window.open('/?customer=1&target='+TARGET,'cba_customer');
   setCustStatus(true);
-  // push current slide once the tab is ready
-  setTimeout(()=>broadcast(cur), 800);
+  setTimeout(()=>{ broadcastTarget(); broadcastAbs(); }, 900);
 }
-function broadcast(i){ if(chan) chan.postMessage({type:'goto', slide:i}); }
+function broadcastAbs(){ if(chan) chan.postMessage({type:'goto', abs:cur}); }
+function broadcastTarget(){ if(chan) chan.postMessage({type:'target', target:TARGET}); }
 function setCustStatus(on){
   const el=document.getElementById('custStatus');
   el.textContent = on ? '顧客画面：接続中' : '顧客画面：未接続';
   el.className = on ? 'cust-on' : 'cust-off';
 }
-// customer tab announces itself / closes
 if(chan) chan.onmessage = (e)=>{
-  if(e.data?.type==='hello') { setCustStatus(true); broadcast(cur); }
+  if(e.data?.type==='hello') { setCustStatus(true); broadcastTarget(); broadcastAbs(); }
   if(e.data?.type==='bye') setCustStatus(false);
 };
 
 __RENDER_JS__
 
-/* ---- build right stage ---- */
+/* ---- target state (A=主婦・会社員 / B=音楽経験者 / C=ヨガ) ---- */
+let TARGET = (new URLSearchParams(location.search).get('target')||'B').toUpperCase();
+if(!['A','B','C'].includes(TARGET)) TARGET='B';
+let cur = 0;            // absolute slide index
+let view = [];          // visible absolute indices for current target
+let vpos = 0;           // position within view
+function rebuildView(){ view = S.map((s,i)=>i).filter(i=>{const t=S[i].target||'all';return t==='all'||t===TARGET;}); }
+
+/* ---- build right stage (all slides; visibility by active class) ---- */
 const rframe = document.getElementById('rframe');
 S.forEach((s,i)=>{
   const el=document.createElement('div'); el.className='slide'; el.dataset.i=i;
@@ -145,14 +160,14 @@ S.forEach((s,i)=>{
 });
 const slideEls=[...rframe.querySelectorAll('.slide')];
 
-/* ---- build left script ---- */
+/* ---- build left script (all; filtered by display) ---- */
 const sclist=document.getElementById('sclist');
 sclist.innerHTML=S.map((s,i)=>{
   const n=s.notes||{};
   const badge=s.badge?`<span class="sc-badge">${s.badge}</span>`:'';
   const stitle=(s.deck.title||s.deck.headline||s.deck.eyebrow||s.id).replace(/<[^>]+>/g,'');
-  return `<div class="sc-item" data-i="${i}" onclick="show(${i})">
-    <div class="sc-head"><span class="sc-num">${String(i+1).padStart(2,'0')}</span>
+  return `<div class="sc-item" data-i="${i}" onclick="showAbs(${i})">
+    <div class="sc-head"><span class="sc-num"></span>
       <span class="sc-sec">${s.section||''}</span>${badge}</div>
     <div class="sc-stitle">${stitle}</div>
     ${n.talk?`<div class="sc-lbl">話す内容</div><div class="sc-talk">${n.talk}</div>`:''}
@@ -161,31 +176,48 @@ sclist.innerHTML=S.map((s,i)=>{
 }).join('');
 const scItems=[...sclist.querySelectorAll('.sc-item')];
 
-/* ---- sync ---- */
-function show(i){
-  cur=Math.max(0,Math.min(S.length-1,i));
-  slideEls.forEach((el,k)=>el.classList.toggle('active',k===cur));
-  scItems.forEach((el,k)=>el.classList.toggle('active',k===cur));
-  document.getElementById('pos').textContent=String(cur+1).padStart(2,'0')+' / '+String(S.length).padStart(2,'0');
-  broadcast(cur); // keep customer tab in sync
-  // keep active script item in view
-  const a=scItems[cur];
-  if(a){const r=a.getBoundingClientRect(),sc=document.getElementById('script');
-    if(r.top<90||r.bottom>innerHeight)a.scrollIntoView({block:'center',behavior:'smooth'});}
+/* ---- target switch ---- */
+function setTarget(t){
+  if(!['A','B','C'].includes(t)) return;
+  TARGET=t; rebuildView();
+  document.querySelectorAll('.tgt').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  // filter left script items + renumber
+  scItems.forEach((el)=>{
+    const i=+el.dataset.i; const tt=S[i].target||'all';
+    el.style.display=(tt==='all'||tt===t)?'':'none';
+  });
+  view.forEach((absI,p)=>{ const el=scItems[absI]; if(el) el.querySelector('.sc-num').textContent=String(p+1).padStart(2,'0'); });
+  broadcastTarget();
+  showView(0);
 }
-function go(d){show(cur+d)}
+
+/* ---- navigation ---- */
+function showView(p){
+  vpos=Math.max(0,Math.min(view.length-1,p));
+  cur=view[vpos];
+  slideEls.forEach((el)=>el.classList.toggle('active',+el.dataset.i===cur));
+  scItems.forEach((el)=>el.classList.toggle('active',+el.dataset.i===cur));
+  document.getElementById('pos').textContent=String(vpos+1).padStart(2,'0')+' / '+String(view.length).padStart(2,'0');
+  broadcastAbs();
+  const a=scItems[cur];
+  if(a){const r=a.getBoundingClientRect();
+    if(r.top<120||r.bottom>innerHeight)a.scrollIntoView({block:'center',behavior:'smooth'});}
+}
+function showAbs(absI){ const p=view.indexOf(absI); if(p>=0) showView(p); }
+function go(d){showView(vpos+d)}
 
 /* ---- keys ---- */
 addEventListener('keydown',e=>{
   if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){go(1);e.preventDefault()}
   if(e.key==='ArrowLeft'||e.key==='PageUp'){go(-1)}
-  if(e.key==='Home')show(0); if(e.key==='End')show(S.length-1);
+  if(e.key==='Home')showView(0); if(e.key==='End')showView(view.length-1);
 });
 let tx=0;
 rframe.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
 rframe.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?1:-1)},{passive:true});
 
-show(0);
+/* ---- init ---- */
+setTarget(TARGET);
 </script>
 </body>
 </html>'''
