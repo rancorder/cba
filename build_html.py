@@ -200,6 +200,13 @@ HTML = r'''<!DOCTYPE html>
   .sv .c{flex:1}
   .sv .ti{font-size:1.7cqw;letter-spacing:.12em;margin-bottom:.6cqh}
   .sv .de{font-size:1.2cqw;letter-spacing:.06em;color:var(--sub);line-height:1.6}
+  /* dense: 5+ items → 2 columns, tighter */
+  .sv.sv-dense{top:19cqh;left:8cqw;right:8cqw;display:grid;grid-template-columns:1fr 1fr;column-gap:4cqw;row-gap:0}
+  .sv.sv-dense .row{margin-bottom:1.8cqh;padding-bottom:1.8cqh}
+  .sv.sv-dense .n{flex:0 0 3.2cqw;font-size:1.4cqw}
+  .sv.sv-dense .ti{font-size:1.32cqw;margin-bottom:.3cqh;letter-spacing:.08em}
+  .sv.sv-dense .de{font-size:1.02cqw;line-height:1.5}
+  .sv.sv-dense .row:nth-last-child(-n+1):nth-child(odd){border-bottom:none}
 
   /* cards */
   .cards{position:absolute;top:32cqh;left:9cqw;right:9cqw;display:flex;gap:3cqw;justify-content:center}
@@ -457,10 +464,10 @@ function render(s){
       <div class="tm-q">${d.quote.map(p=>`<p>${p}</p>`).join('')}</div>`;
     case 'service': return `
       <div class="band head-band"><h2>${d.title}</h2></div>
-      <div class="sv">
+      <div class="sv ${d.items.length>=5?'sv-dense':''}">
         ${d.items.map((it,i)=>`<div class="row"><div class="n">${roman(i)}.</div><div class="c"><div class="ti">${it[0]}</div><div class="de">${it[1]}</div></div></div>`).join('')}
       </div>
-      <div class="foot" style="bottom:4cqh">${d.foot}</div>`;
+      <div class="foot" style="bottom:3cqh">${d.foot}</div>`;
     case 'cards': return `
       <div class="band head-band"><h2>${d.title}</h2></div>
       <div class="cards">${d.cards.map(c=>`<div class="card">${c}</div>`).join('')}</div>
